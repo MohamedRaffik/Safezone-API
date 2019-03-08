@@ -41,7 +41,26 @@ from bs4 import BeautifulSoup
 #       Only one value can be set at a time
 
 URL = 'https://compstat.nypdonline.org/api/reports/13/datasource/list'
-for filt in ['TotalMajor7', 'PSB', 'Housing', 'Sht. Vic.', 'Sht. Inc.', 'Rape 1', 'Petit Larceny', 'Misd. Assault', 'Misd. Sex Crimes']:
+filters = {
+  'Murder': 'Murder',
+  'Rape': 'Rape',
+  'Robbery': 'Robbery',
+  'Fel. Assault': 'Felony Assault',
+  'Burglary': 'Burglary',
+  'Gr. Larceny': 'Grand Larceny',
+  'G.L.A.': 'Grand Larceny Auto',
+  'Sht. Vic.': 'Shooting Victims',
+  'Sht. Inc.': 'Shooting Incidents',
+  'Rape 1': 'Rape',
+  'Petit Larceny': 'Petit Larceny', 
+  'Misd. Assault': 'Misdemeanor Assault',
+  'Misd. Sex Crimes': 'Misdemeanor Sex Crimes'
+}
+
+f = open('crimes.csv', 'w')
+f.write('category,crime_date,crime_time,ofns_desc,latitude,longitude')
+
+for filt in filters:
   data = {
     "filters": [
       {
@@ -79,16 +98,17 @@ for filt in ['TotalMajor7', 'PSB', 'Housing', 'Sht. Vic.', 'Sht. Inc.', 'Rape 1'
   #   }
   # ]
 
-  f = open('{0}.csv'.format(filt), 'w')
-  f.write('crime_date,crime_time,ofns_desc,latitude,longitude')
   for r in results:
-    f.write('\n{0},{1},{2},{3},{4}'.format(
+    if r['Title'] == '':
+      continue
+    f.write('\n{0},{1},{2},{3},{4},{5}'.format(
+      filters[filt],
       str(BeautifulSoup(r['Title'], features='html.parser').find_all('span')[-1].string).split(' ')[0],
       str(BeautifulSoup(r['Title'], features='html.parser').find_all('span')[-1].string).split(' ')[-1],
       str(BeautifulSoup(r['Title'], features='html.parser').find_all('span')[0].string),  
       r['Value'].split(',')[0],
       r['Value'].split(',')[-1]
     ))
-  f.close()
+f.close()
 
 
