@@ -41,53 +41,54 @@ from bs4 import BeautifulSoup
 #       Only one value can be set at a time
 
 URL = 'https://compstat.nypdonline.org/api/reports/13/datasource/list'
-data = {
-  "filters": [
-    {
-      "key": "PRECINCTKey",    
-      "label": "Command",      
-      "values": [ "Citywide" ]
-    },
-    {
-      "key": "CrimeKey",
-      "label": "Crime",
-      "values": [ "Misd. Sex Crimes" ]
-    },
-    {
-      "key": "RECORDID",
-      "label": "Time Period",
-      "values": [ "WTD" ]
-    }
-  ]
-}
-
-results = requests.post(URL, json=data, verify=False).json()
-
-# Data returned is a list
-# [
-#   - A single element looks like this
-#   {
-#     "Value": [string] Coordinates ex: '40.7016861,-73.9088377
-#     "Metric": [float] Usually 1.0 
-#     "Title":  [html] Defines the type of crime, date and approximate time of occurrence (nearest hour)
-#                        - Both in Inner HTML of span, in div with class 'text-left'
-#                        - Description Appears in First span and data/time appears in last span
-#     "Color": [string]
-#     "TooltipHtml": [html] Same value as title
-#     "RelatedItems": [List] Usually empty
-#   }
-# ]
-
-crimes = [
-  {
-    'coordinates': r['Value'],
-    'ofns_desc': str(BeautifulSoup(r['Title'], features='html.parser').find_all('span')[0].string),
-    'crime_date': str(BeautifulSoup(r['Title'], features='html.parser').find_all('span')[-1].string).split(' ')[0]
+for filt in ['TotalMajor7', 'PSB', 'Housing', 'Sht. Vic.', 'Sht. Inc.', 'Rape 1', 'Petit Larceny', 'Misd. Assault', 'Misd. Sex Crimes']:
+  data = {
+    "filters": [
+      {
+        "key": "PRECINCTKey",    
+        "label": "Command",      
+        "values": [ "Citywide" ]
+      },
+      {
+        "key": "CrimeKey",
+        "label": "Crime",
+        "values": [ filt ]
+      },
+      {
+        "key": "RECORDID",
+        "label": "Time Period",
+        "values": [ "YTD" ]
+      }
+    ]
   }
-  for r in results
-]
 
-for c in crimes:
-  print(c)
+  results = requests.post(URL, json=data, verify=False).json()
+
+  # Data returned is a list
+  # [
+  #   - A single element looks like this
+  #   {
+  #     "Value": [string] Coordinates ex: '40.7016861,-73.9088377
+  #     "Metric": [float] Usually 1.0 
+  #     "Title":  [html] Defines the type of crime, date and approximate time of occurrence (nearest hour)
+  #                        - Both in Inner HTML of span, in div with class 'text-left'
+  #                        - Description Appears in First span and data/time appears in last span
+  #     "Color": [string]
+  #     "TooltipHtml": [html] Same value as title
+  #     "RelatedItems": [List] Usually empty
+  #   }
+  # ]
+
+  f = open('{0}.csv'.format(filt), 'w')
+  f.write('crime_date,crime_time,ofns_desc,latitude,longitude')
+  for r in results:
+    f.write('\n{0},{1},{2},{3},{4}'.format(
+      str(BeautifulSoup(r['Title'], features='html.parser').find_all('span')[-1].string).split(' ')[0],
+      str(BeautifulSoup(r['Title'], features='html.parser').find_all('span')[-1].string).split(' ')[-1],
+      str(BeautifulSoup(r['Title'], features='html.parser').find_all('span')[0].string),  
+      r['Value'].split(',')[0],
+      r['Value'].split(',')[-1]
+    ))
+  f.close()
 
 
