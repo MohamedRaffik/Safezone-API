@@ -1,0 +1,9 @@
+.git
+.gitignore
+venv/
+__pycache__/
+.vscode
+cloud_sql_proxy
+*.pyc
+README.md
+.pytest_cache/
